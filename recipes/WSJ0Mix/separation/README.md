@@ -128,3 +128,35 @@ Please, cite SpeechBrain if you use it for your research or business.
   note={arXiv:2106.04624}
 }
 ```
+
+
+# **TF-GridNet training plan**
+
+TF-GridNet ([arXiv:2211.12433](https://arxiv.org/abs/2211.12433), companion
+[arXiv:2209.03952](https://arxiv.org/abs/2209.03952)) is a time-frequency
+separation model that integrates full-band (intra-frame) and sub-band
+(inter-frame) modeling. Unlike the mask-based models above, it is a complete
+separator that owns its STFT analysis and synthesis: the SpeechBrain port
+(`speechbrain/lobes/models/tfgridnet.py`) takes the mixture waveform `(B, T)`
+and directly returns the separated sources `(B, n_srcs, T)`.
+
+To train it on WSJ0-2mix (or WSJ0-3mix with `--num_spks=3`):
+
+```bash
+python train_tfgridnet.py hparams/tfgridnet.yaml --data_folder /yourpath/wsj0-mix/2speakers
+```
+
+Dynamic mixing (recommended, as in the paper) is enabled with:
+
+```bash
+python train_tfgridnet.py hparams/tfgridnet.yaml --data_folder /yourpath/wsj0-mix/2speakers --base_folder_dm /yourpath/wsj0-processed/si_tr_s/ --dynamic_mixing True
+```
+
+The `hparams/tfgridnet.yaml` file ships the paper-scale configuration
+(`n_layers=6`, `emb_dim=48`, `lstm_hidden_units=192`, `attn_n_head=4`,
+`n_fft=128`, `stride=64`) and trains with the scale-invariant PIT SI-SNR loss,
+which matches the model's internal variance normalization. Per the paper, the
+expected SI-SNRi on WSJ0-2mix is in the ~20-23 dB range (with dynamic mixing);
+this must be confirmed with a full GPU training run, which is planned as
+follow-up work.
+
